@@ -1,0 +1,73 @@
+#!/bin/bash
+# pacinfo 1.0.0 - Pacman monitor for XFCE genmon plugin
+# Copyright (C) 2013 Digirium, see <https://github.com/Digirium/>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Pacman is the package manager for Arch Linux.
+iconfile=$HOME/.genmon-icon/pacinfo.png
+
+# Need sudo to be setup so that no password is required. Run pacman
+# to update the database and to get package upgrade list.
+sudo pacman -Sy --noprogressbar 1>/dev/null 2>&1
+pkgs=$(pacman -Qqu)
+
+# If there are packages, filter the ignored ones. Add ignored package
+# names to the ignorelist line separate names with a bar; wine is put on
+# the list as an example, remove it and the bar unless you ignore wine.
+t=
+let "n=0"
+for p in $pkgs
+do
+	case $p in
+	ignorelist|wine)
+		;;
+	*)
+		if [[ -z "$t" ]]
+		then
+			t="$p"
+		else
+			t="$t $p"
+		fi
+		let "n++"
+		;;
+	esac
+done
+pkgs="$t"
+
+# If there are packages waiting to be upgraded, switch to the
+# ghost icon instead of the pacman icon.
+if [[ ! -z "$pkgs" ]]
+then
+	iconfile=$HOME/.genmon-icon/pacinfo-ghost.png
+	pkgs="$pkgs (Total: $n)."
+else
+	pkgs="None."
+fi
+
+# Get how many packages are installed.
+inst="$(cd /var/lib/pacman/local; ls | wc -l)"
+
+### XFCE GENMON XML ###
+
+# Icon and tool tip.
+cat <<-EOF
+<img>$iconfile</img>
+<tool>Kernel release: $(uname -r)
+Packages installed: $inst
+Package upgrades waiting: $pkgs
+Last synchronized: $(date)</tool>
+EOF
+
+exit 0
