@@ -15,6 +15,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+CF=C
+while getopts ":F" opt
+do
+	case $opt in
+	F)
+		CF=F
+		;;
+	*)
+		echo "Invalid option: -$OPTARG"
+		exit 1
+		;;
+	esac
+done
+
 gputemp=$(nvidia-settings -q gpucoretemp -t)
 usedmem=$(nvidia-settings -q [gpu:0]/UsedDedicatedGPUMemory -t)
 clocks2=$(nvidia-settings -q [gpu:0]/GPUCurrentClockFreqsString -t)
@@ -22,9 +36,16 @@ clocks2=$(nvidia-settings -q [gpu:0]/GPUCurrentClockFreqsString -t)
 nvclock=$(echo $clocks2 | sed 's/nvclock=\([0-9]*\),.*$/\1/')
 memclock=$(echo $clocks2 | sed 's/^.*, memclock=\([0-9]*\)$/\1/')
 
+case $CF in
+F)
+	let "F=($gputemp*9/5)+32"
+	gputemp=$F
+	;;
+esac
+
 cat <<-EOF
 <img>$HOME/.genmon-icon/nvidiainfo.png</img>
-<txt>${gputemp}°C ${nvclock}MHz
+<txt>${gputemp}°$CF ${nvclock}MHz
 ${usedmem}M ${memclock}MHz</txt>
 EOF
 
