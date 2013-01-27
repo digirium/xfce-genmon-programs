@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 gputemp=$(nvidia-settings -q gpucoretemp -t)
-usedmem=$(nvidia-settings --query [gpu:0]/UsedDedicatedGPUMemory -t)
+usedmem=$(nvidia-settings -q [gpu:0]/UsedDedicatedGPUMemory -t)
 clocks2=$(nvidia-settings -q [gpu:0]/GPUCurrentClockFreqsString -t)
 
 nvclock=$(echo $clocks2 | sed 's/nvclock=\([0-9]*\),.*$/\1/')
