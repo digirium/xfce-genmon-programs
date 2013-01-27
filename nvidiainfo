@@ -1,5 +1,5 @@
 #!/bin/bash
-# nvidiainfo 1.0.0 - NVIDIA monitor for XFCE genmon plugin
+# nvidiainfo 1.0.1 - NVIDIA monitor for XFCE genmon plugin
 # Copyright (C) 2013 Digirium, see <https://github.com/Digirium/>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,10 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+gputemp=$(nvidia-settings -q gpucoretemp -t)
+usedmem=$(nvidia-settings --query [gpu:0]/UsedDedicatedGPUMemory -t)
+clocks2=$(nvidia-settings -q [gpu:0]/GPUCurrentClockFreqsString -t)
+
+nvclock=$(echo $clocks2 | sed 's/nvclock=\([0-9]*\),.*$/\1/')
+memclock=$(echo $clocks2 | sed 's/^.*, memclock=\([0-9]*\)$/\1/')
+
 cat <<-EOF
 <img>$HOME/.genmon-icon/nvidiainfo.png</img>
-<txt>$(nvidia-smi -q -g 0 | fgrep Used | awk '{ print $3 }')M
-$(nvidia-settings -q gpucoretemp -t)°C</txt>
+<txt>${gputemp}°C ${nvclock}MHz
+${usedmem}M ${memclock}MHz</txt>
 EOF
 
 exit 0
