@@ -16,9 +16,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 CF=C
-while getopts ":F" opt
+showclock=no
+while getopts ":cF" opt
 do
 	case $opt in
+	c)
+		showclock=yes
+		;;
 	F)
 		CF=F
 		;;
@@ -31,10 +35,6 @@ done
 
 gputemp=$(nvidia-settings -q gpucoretemp -t)
 usedmem=$(nvidia-settings -q [gpu:0]/UsedDedicatedGPUMemory -t)
-clocks2=$(nvidia-settings -q [gpu:0]/GPUCurrentClockFreqsString -t)
-
-nvclock=$(echo $clocks2 | sed 's/nvclock=\([0-9]*\),.*$/\1/')
-memclock=$(echo $clocks2 | sed 's/^.*, memclock=\([0-9]*\)$/\1/')
 
 case $CF in
 F)
@@ -43,10 +43,25 @@ F)
 	;;
 esac
 
-cat <<-EOF
-<img>$HOME/.genmon-icon/nvidiainfo.png</img>
-<txt>${gputemp}°$CF ${nvclock}MHz
-${usedmem}M ${memclock}MHz</txt>
-EOF
+case $showclock in
+no)
+	cat <<-EOF
+	<img>$HOME/.genmon-icon/nvidiainfo.png</img>
+	<txt>${gputemp}°$CF
+	${usedmem}M</txt>
+	EOF
+	;;
+yes)
+	clocks2=$(nvidia-settings -q [gpu:0]/GPUCurrentClockFreqsString -t)
+	nvclock=$(echo $clocks2 | sed 's/nvclock=\([0-9]*\),.*$/\1/')
+	memclock=$(echo $clocks2 | sed 's/^.*, memclock=\([0-9]*\)$/\1/')
+
+	cat <<-EOF
+	<img>$HOME/.genmon-icon/nvidiainfo.png</img>
+	<txt>${gputemp}°$CF ${nvclock}MHz
+	${usedmem}M ${memclock}MHz</txt>
+	EOF
+	;;
+esac
 
 exit 0
