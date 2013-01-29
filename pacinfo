@@ -1,5 +1,5 @@
 #!/bin/bash
-# pacinfo 1.0.0 - Pacman monitor for XFCE genmon plugin
+# pacinfo - Pacman monitor for XFCE genmon plugin
 # Copyright (C) 2013 Digirium, see <https://github.com/Digirium/>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -16,6 +16,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Pacman is the package manager for Arch Linux.
+while getopts ":v" opt
+do
+	case $opt in
+	v)
+		echo "pacinfo 1.0.0 - (C) 2013 Digirium, see <https://github.com/Digirium)"
+		echo "Released under the GNU GPL."
+		exit 0
+		;;
+	*)
+		echo "Invalid option: -$OPTARG"
+		exit 1
+		;;
+	esac
+done
+
+# Default icon is the pacman meaning no packages require
+# to be upgraded. Changes to a ghost if updates are found.
 iconfile=$HOME/.genmon-icon/pacinfo.png
 
 # Need sudo to be setup so that no password is required. Run pacman
