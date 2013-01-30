@@ -17,7 +17,8 @@
 
 CF=C
 showclock=no
-while getopts ":cFv" opt
+iconfile=$HOME/.genmon-icon/nvidiainfo.png
+while getopts ":cFi:v" opt
 do
 	case $opt in
 	c)
@@ -25,6 +26,16 @@ do
 		;;
 	F)
 		CF=F
+		;;
+	i)
+		case "$OPTARG" in
+		/*)
+			iconfile="$OPTARG"
+			;;
+		*)
+			iconfile="$HOME/.genmon-icon/$OPTARG"
+			;;
+		esac
 		;;
 	v)
 		echo "nvidiainfo 1.0.2 - (C) 2013 Digirium, see <https://github.com/Digirium)"
@@ -51,7 +62,7 @@ esac
 case $showclock in
 no)
 	cat <<-EOF
-	<img>$HOME/.genmon-icon/nvidiainfo.png</img>
+	<img>$iconfile</img>
 	<txt>${gputemp}°$CF
 	${usedmem}M</txt>
 	EOF
@@ -62,7 +73,7 @@ yes)
 	memclock=$(echo $clocks2 | sed 's/^.*, memclock=\([0-9]*\)$/\1/')
 
 	cat <<-EOF
-	<img>$HOME/.genmon-icon/nvidiainfo.png</img>
+	<img>$iconfile</img>
 	<txt>${gputemp}°$CF ${nvclock}MHz
 	${usedmem}M ${memclock}MHz</txt>
 	EOF
