@@ -49,8 +49,14 @@ do
 	esac
 done
 
+version=$(nvidia-settings -q NvidiaDriverVersion -t)
+
 gputemp=$(nvidia-settings -q gpucoretemp -t)
 usedmem=$(nvidia-settings -q [gpu:0]/UsedDedicatedGPUMemory -t)
+
+clocks2=$(nvidia-settings -q [gpu:0]/GPUCurrentClockFreqsString -t)
+nvclock=$(echo $clocks2 | sed 's/nvclock=\([0-9]*\),.*$/\1/')
+memclock=$(echo $clocks2 | sed 's/^.*, memclock=\([0-9]*\)$/\1/')
 
 case $CF in
 F)
@@ -65,17 +71,16 @@ no)
 	<img>$iconfile</img>
 	<txt>${gputemp}°$CF
 	${usedmem}M</txt>
+	<tool>Nvidia Driver Version: $version
+	GPU clock: ${nvclock}MHz Memory clock: ${memclock}MHz</tool>
 	EOF
 	;;
 yes)
-	clocks2=$(nvidia-settings -q [gpu:0]/GPUCurrentClockFreqsString -t)
-	nvclock=$(echo $clocks2 | sed 's/nvclock=\([0-9]*\),.*$/\1/')
-	memclock=$(echo $clocks2 | sed 's/^.*, memclock=\([0-9]*\)$/\1/')
-
 	cat <<-EOF
 	<img>$iconfile</img>
 	<txt>${gputemp}°$CF ${nvclock}MHz
 	${usedmem}M ${memclock}MHz</txt>
+	<tool>Nvidia Driver Version: $version</tool>
 	EOF
 	;;
 esac
