@@ -16,11 +16,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Pacman is the package manager for Arch Linux.
-while getopts ":v" opt
+showtxt=no
+while getopts ":tv" opt
 do
 	case $opt in
+	t)
+		showtxt=yes
+		;;
 	v)
-		echo "pacinfo 1.0.0 - (C) 2013 Digirium, see <https://github.com/Digirium)"
+		echo "pacinfo 1.0.1 - (C) 2013 Digirium, see <https://github.com/Digirium)"
 		echo "Released under the GNU GPL."
 		exit 0
 		;;
@@ -63,28 +67,45 @@ do
 done
 pkgs="$t"
 
+# Get how many packages are installed.
+inst="$(cd /var/lib/pacman/local; ls | wc -l)"
+
 # If there are packages waiting to be upgraded, switch to the
 # ghost icon instead of the pacman icon.
 if [[ ! -z "$pkgs" ]]
 then
 	iconfile=$HOME/.genmon-icon/pacinfo-ghost.png
 	pkgs="$pkgs (Total: $n)."
+	txt1="$inst-$n"
 else
 	pkgs="None."
+	txt1="$inst"
 fi
-
-# Get how many packages are installed.
-inst="$(cd /var/lib/pacman/local; ls | wc -l)"
 
 ### XFCE GENMON XML ###
 
-# Icon and tool tip.
-cat <<-EOF
-<img>$iconfile</img>
-<tool>Kernel release: $(uname -r)
-Packages installed: $inst
-Package upgrades waiting: $pkgs
-Last synchronized: $(date)</tool>
-EOF
+kernel="$(uname -r | sed 's/-ARCH//')"
+case $showtxt in
+yes)
+	cat <<-EOF
+	<img>$iconfile</img>
+	<txt>$txt1
+	$kernel</txt>
+	<tool>Kernel release: $(uname -r)
+	Packages installed: $inst
+	Package upgrades waiting: $pkgs
+	Last synchronized: $(date)</tool>
+	EOF
+	;;
+no)
+	cat <<-EOF
+	<img>$iconfile</img>
+	<tool>Kernel release: $(uname -r)
+	Packages installed: $inst
+	Package upgrades waiting: $pkgs
+	Last synchronized: $(date)</tool>
+	EOF
+	;;
+esac
 
 exit 0
