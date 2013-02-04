@@ -285,7 +285,8 @@ main (int argc, char *argv[])
 	printf ("<txt>%sG\n%d°%c</txt>\n", du(diskused), (int)disktemp, CF);
 
 	/* Tool tip */
-	printf ("<tool>Mount: %s  Device: %s  ID: %s\n", mountpath, diskpath, ID);
+	printf ("<tool>ID: %s\n", ID);
+	printf ("Mount: %s  Device: %s\n", mountpath, diskpath);
 
 	printf ("Total: %.2fG  Available: %.2fG  Used: %.2fG (%d%%)\n",
 		disktotal, diskfree, diskused, diskpercent);
