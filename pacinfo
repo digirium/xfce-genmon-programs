@@ -82,30 +82,28 @@ else
 	txt1="$inst"
 fi
 
+# How much disk space is occupied by cached packages?
+txt2=$(cd /var/cache/pacman; du -h pkg 2>/dev/null | awk '$2 == "pkg" { print $1 }')
+
 ### XFCE GENMON XML ###
 
-kernel="$(uname -r | sed 's/-ARCH//')"
-case $showtxt in
-yes)
+echo "<img>$iconfile</img>"
+
+if [[ $showtxt == yes ]]
+then
+
 	cat <<-EOF
-	<img>$iconfile</img>
 	<txt>$txt1
-	$kernel</txt>
-	<tool>Kernel release: $(uname -r)
-	Packages installed: $inst
-	Package upgrades waiting: $pkgs
-	Last synchronized: $(date)</tool>
+	$txt2</txt>
 	EOF
-	;;
-no)
-	cat <<-EOF
-	<img>$iconfile</img>
-	<tool>Kernel release: $(uname -r)
-	Packages installed: $inst
-	Package upgrades waiting: $pkgs
-	Last synchronized: $(date)</tool>
-	EOF
-	;;
-esac
+fi
+
+cat <<EOF
+<tool>Packages installed: $inst
+Package upgrades waiting: $pkgs
+Package cache size: $txt2
+Last synchronized: $(date)
+Kernel: $(uname -r)</tool>
+EOF
 
 exit 0
