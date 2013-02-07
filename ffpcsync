@@ -1,0 +1,119 @@
+#!/bin/bash
+# ffpcsync - Firefox profile cache synchronizer for XFCE genmon plugin
+# Copyright (C) 2013 Digirium, see <https://github.com/Digirium/>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+cd $HOME/.mozilla
+
+iconfile=$HOME/.genmon-icon/ffpcsync.png
+cachedir=/dev/shm/firefox.$(id -u)
+beverbose=no
+
+exit_if_ff_running ()
+{
+	if [[ -n "$(find firefox -name lock -print)" ]]
+	then
+		[[ $beverbose = yes ]] && echo "stop firefox before running $1"
+		exit 1
+	fi
+}
+
+# Manual option to perform an operation to defragment and reindex all of the
+# databases used by firefox. Make sure firefox is not running. Usually, the result
+# is reduced start up time for firefox. However, there is risk that the operation
+# may render the databases inoperative with firefox. Therefore use this at your
+# own peril!! NB firefox defragments certain databases monthly.
+defragment_sqlite_db ()
+{
+	exit_if_ff_running "defragment operation"
+
+	allsql=$(find firefox -name '*.sqlite' -print)
+
+	if [[ $beverbose == yes ]]
+	then
+		total=$(du -bc $allsql | awk '$2 == "total" { print $1 }')
+		echo "Total before defragmenting $(echo "scale=2; $total/1048576" | bc)MB"
+	fi
+
+	for sql in $allsql
+	do
+		[[ $beverbose == yes ]] && echo "  defragmenting $sql"
+		sqlite3 "$sql" "vacuum; reindex"
+	done
+
+	if [[ $beverbose == yes ]]
+	then
+		total=$(du -bc $allsql | awk '$2 == "total" { print $1 }')
+		echo "Total after defragmenting $(echo "scale=2; $total/1048576" | bc)MB"
+	fi
+}
+
+while getopts ":drv" opt
+do
+	case $opt in
+	d)
+		beverbose=yes
+		defragment_sqlite_db
+		exit 0
+		;;
+	r)	# To restore the original profile directory, quit firefox and remove
+		# the plugin from the panel. Manually run for a final sync, repeat with
+		# this option to restore the original profile directory.
+		[[ -h firefox ]] && rm firefox
+		[[ -d firefox.disk ]] && mv firefox.disk firefox
+		;;
+	v)
+		echo "ffpcsync 1.0.0 - (C) 2013 Digirium, see <https://github.com/Digirium>"
+		echo "Released under the GNU GPL."
+		exit 0
+		;;
+	*)
+		echo "Invalid option: -$OPTARG"
+		exit 1
+		;;
+	esac
+done
+
+if [[ -d $cachedir ]]
+then
+	# Synchronize the cache to disk. The interval is whatever is specified to the
+	# generic monitor plugin that calls this script (e.g. 600 seconds).
+	rsync -a --delete --exclude=lock --delete-excluded ./firefox/ ./firefox.disk/
+else
+	exit_if_ff_running "cache setup"
+
+	# Cache needs to be created again after each login/restart.
+	mkdir -m0700 $cachedir
+
+	# The disk copy of firefox profile and the symbolic link to the cache are
+	# persistent once they have been established. After the first time they both
+	# stay as they are until at some point caching is turned off.
+	[[ ! -d firefox.disk ]] && mv firefox firefox.disk
+	[[ ! -h firefox ]] && ln -s $cachedir firefox
+
+	# Populate the cache.
+	rsync -a ./firefox.disk/ ./firefox/
+fi
+
+
+### XFCE GENMON XML ###
+
+cat <<EOF
+<img>$iconfile</img>
+<tool>Cache size: $(du -sm $cachedir | awk '{ print $1 }')MB
+Last synchronized: $(date)</tool>
+EOF
+
+exit 0

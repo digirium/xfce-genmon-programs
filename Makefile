@@ -9,6 +9,8 @@ all: $(ALL)
 	chmod 755 $(HOME)/bin/nvidiainfo
 	cp pacinfo $(HOME)/bin/pacinfo
 	chmod 755 $(HOME)/bin/pacinfo
+	cp ffpcsync $(HOME)/bin/ffpcsync
+	chmod 755 $(HOME)/bin/ffpcsync
 
 $(HOME)/bin/%: %.c
 	$(CC) -o $@ $?
