@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Pacman is the package manager for Arch Linux.
 showtxt=no
 while getopts ":tv" opt
 do
@@ -24,7 +23,7 @@ do
 		showtxt=yes
 		;;
 	v)
-		echo "pacinfo 1.0.1 - (C) 2013 Digirium, see <https://github.com/Digirium)"
+		echo "pacinfo 1.0.1 - (C) 2013 Digirium, see <https://github.com/Digirium>"
 		echo "Released under the GNU GPL."
 		exit 0
 		;;
