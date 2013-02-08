@@ -103,8 +103,12 @@ else
 	[[ ! -d firefox.disk ]] && mv firefox firefox.disk
 	[[ ! -h firefox ]] && ln -s $cachedir firefox
 
-	# Populate the cache.
+	# Populate the memory cache.
 	rsync -a ./firefox.disk/ ./firefox/
+
+	# Uncomment line below if you want to defragment databases automatically when
+	# the memory cache is initialized. NB understand the risks involved.
+	# defragment_sqlite_db
 fi
 
 
