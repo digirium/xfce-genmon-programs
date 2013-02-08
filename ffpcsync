@@ -73,6 +73,8 @@ do
 		# this option to restore the original profile directory.
 		[[ -h firefox ]] && rm firefox
 		[[ -d firefox.disk ]] && mv firefox.disk firefox
+		echo "Firefox profile is restored."
+		exit 0
 		;;
 	v)
 		echo "ffpcsync 1.0.0 - (C) 2013 Digirium, see <https://github.com/Digirium>"
