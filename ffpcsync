@@ -74,7 +74,8 @@ do
 		defragment_sqlite_db
 		exit 0
 		;;
-	r)	# To restore the original profile directory, quit firefox and remove
+	r)
+		# To restore the original profile directory, quit firefox and remove
 		# this plugin from the panel. Manually run for final sync then run again
 		# with using this  option to restore the original profile directory.
 		exit_if_ff_running "restore operation"
@@ -84,7 +85,7 @@ do
 		exit 0
 		;;
 	v)
-		echo "ffpcsync 1.0.0 - (C) 2013 Digirium, see <https://github.com/Digirium>"
+		echo "ffpcsync 1.0.1 - (C) 2013 Digirium, see <https://github.com/Digirium>"
 		echo "Released under the GNU GPL."
 		exit 0
 		;;
@@ -125,7 +126,7 @@ fi
 
 cat <<EOF
 <img>$iconfile</img>
-<tool>Cache size: $(du -sm $cachedir | awk '{ print $1 }')MB
+<tool>Memory cache size: $(du -sm $cachedir | awk '{ print $1 }')MB
 Last synchronized: $(date)</tool>
 <click>firefox</click>
 EOF
