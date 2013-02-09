@@ -21,9 +21,12 @@ iconfile=$HOME/.genmon-icon/ffpcsync.png
 cachedir=/dev/shm/firefox.$(id -u)
 beverbose=no
 
+ff_running=no
+[[ -n "$(find -L firefox -name lock -print)" ]] && ff_running=yes
+
 exit_if_ff_running ()
 {
-	if [[ -n "$(find firefox -name lock -print)" ]]
+	if [[ $ff_running == yes ]]
 	then
 		[[ $beverbose = yes ]] && echo "stop firefox before running $1"
 		exit 1
@@ -39,7 +42,7 @@ defragment_sqlite_db ()
 {
 	exit_if_ff_running "defragment operation"
 
-	allsql=$(find firefox -name '*.sqlite' -print)
+	allsql=$(find -L firefox -name '*.sqlite' -print)
 
 	if [[ $beverbose == yes ]]
 	then
@@ -49,8 +52,9 @@ defragment_sqlite_db ()
 
 	for sql in $allsql
 	do
-		[[ $beverbose == yes ]] && echo "  defragmenting $sql"
+		[[ $beverbose == yes ]] && printf "  %-50s" "defragmenting $(basename $sql)"
 		sqlite3 "$sql" "vacuum; reindex"
+		[[ $beverbose == yes ]] && printf "[done]\n"
 	done
 
 	if [[ $beverbose == yes ]]
@@ -64,13 +68,16 @@ while getopts ":drv" opt
 do
 	case $opt in
 	d)
+		# Run defragment operation and quit.
+		# NB understand the risk involved.
 		beverbose=yes
 		defragment_sqlite_db
 		exit 0
 		;;
 	r)	# To restore the original profile directory, quit firefox and remove
-		# the plugin from the panel. Manually run for a final sync, repeat with
-		# this option to restore the original profile directory.
+		# this plugin from the panel. Manually run for final sync then run again
+		# with using this  option to restore the original profile directory.
+		exit_if_ff_running "restore operation"
 		[[ -h firefox ]] && rm firefox
 		[[ -d firefox.disk ]] && mv firefox.disk firefox
 		echo "Firefox profile is restored."
@@ -109,7 +116,7 @@ else
 	rsync -a ./firefox.disk/ ./firefox/
 
 	# Uncomment line below if you want to defragment databases automatically when
-	# the memory cache is initialized. NB understand the risks involved.
+	# the memory cache is initialized. NB understand the risk involved.
 	# defragment_sqlite_db
 fi
 
@@ -120,6 +127,7 @@ cat <<EOF
 <img>$iconfile</img>
 <tool>Cache size: $(du -sm $cachedir | awk '{ print $1 }')MB
 Last synchronized: $(date)</tool>
+<click>firefox</click>
 EOF
 
 exit 0
