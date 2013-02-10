@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-cd $HOME/.mozilla
+cd $HOME/.mozilla 2>/dev/null || exit 1
 
 iconfile=$HOME/.genmon-icon/ffpcsync.png
 cachedir=/dev/shm/firefox.$(id -u)
@@ -29,7 +29,7 @@ exit_if_ff_running ()
 	if [[ $ff_running == yes ]]
 	then
 		[[ $beverbose = yes ]] && echo "stop firefox before running $1"
-		exit 1
+		exit 2
 	fi
 }
 
@@ -64,34 +64,69 @@ defragment_sqlite_db ()
 	fi
 }
 
-while getopts ":drv" opt
+sync_memory_cache_to_disk ()
+{
+	rsync -a --delete --exclude=lock --delete-excluded ./firefox/ ./firefox.disk/
+}
+
+restore_original_profile_folder ()
+{
+	exit_if_ff_running "restore operation"
+
+	# Criteria check. If it succeeds, remove the link to the cache directory
+	# and move the disk profile to the original name. The memory cache may or may
+	# not exist. If it does, synchronize it with disk and remove it.
+	if [[ -d firefox.disk && -h firefox && $(readlink firefox) == $cachedir ]]
+	then
+		[[ -d $cacehdir ]] && sync_memory_cache_to_disk
+		rm -rf $cachedir 2>/dev/null
+		rm firefox && mv firefox.disk firefox && echo "firefox profile is restored"
+	else
+		echo "restore profile operation failed to match criteria"
+	fi
+}
+
+while getopts ":drsvw" opt
 do
 	case $opt in
 	d)
-		# Run defragment operation and quit.
+		# Run defragment operation without outputting genmon XML.
 		# NB understand the risk involved.
 		beverbose=yes
 		defragment_sqlite_db
 		exit 0
 		;;
 	r)
-		# To restore the original profile directory, quit firefox and remove
-		# this plugin from the panel. Manually run for final sync then run again
-		# with using this  option to restore the original profile directory.
-		exit_if_ff_running "restore operation"
-		[[ -h firefox ]] && rm firefox
-		[[ -d firefox.disk ]] && mv firefox.disk firefox
-		echo "Firefox profile is restored."
+		# Restore the original firefox profile folder.
+		restore_original_profile_folder
+		exit 0
+		;;
+	s)
+		# Manually initiated sync operation, usable for example just before
+		# logging out and/or shutting down the system. Ensures that the disk
+		# copy of the profile is updated. Does not output genmon XML.
+		[[ -d $cachedir ]] && sync_memory_cache_to_disk
 		exit 0
 		;;
 	v)
-		echo "ffpcsync 1.0.1 - (C) 2013 Digirium, see <https://github.com/Digirium>"
+		echo "ffpcsync 1.0.2 - (C) 2013 Digirium, see <https://github.com/Digirium>"
 		echo "Released under the GNU GPL."
+		exit 0
+		;;
+	w)
+		# Wrapper mode. Runs firefox and then runs a sync operation to ensure
+		# that the disk copy of the profile is up to date. Used by the click
+		# option in the genmon XML that is outputted.
+		if [[ -d firefox.disk && -h firefox && $(readlink firefox) == $cachedir && $ff_running = no ]]
+		then
+			/usr/bin/firefox 1>/dev/null 2>&1
+			sync_memory_cache_to_disk
+		fi
 		exit 0
 		;;
 	*)
 		echo "Invalid option: -$OPTARG"
-		exit 1
+		exit 3
 		;;
 	esac
 done
@@ -100,7 +135,7 @@ if [[ -d $cachedir ]]
 then
 	# Synchronize the cache to disk. The interval is whatever is specified to the
 	# generic monitor plugin that calls this script (e.g. 600 seconds).
-	rsync -a --delete --exclude=lock --delete-excluded ./firefox/ ./firefox.disk/
+	sync_memory_cache_to_disk
 else
 	exit_if_ff_running "cache setup"
 
@@ -109,7 +144,7 @@ else
 
 	# The disk copy of firefox profile and the symbolic link to the cache are
 	# persistent once they have been established. After the first time they both
-	# stay as they are until at some point caching is turned off.
+	# stay as they are until at some point memory caching is turned off.
 	[[ ! -d firefox.disk ]] && mv firefox firefox.disk
 	[[ ! -h firefox ]] && ln -s $cachedir firefox
 
@@ -128,7 +163,7 @@ cat <<EOF
 <img>$iconfile</img>
 <tool>Memory cache size: $(du -sm $cachedir | awk '{ print $1 }')MB
 Last synchronized: $(date)</tool>
-<click>firefox</click>
+<click>$0 -w</click>
 EOF
 
 exit 0
