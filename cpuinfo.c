@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 static char *prog = "cpuinfo";
-static char *vers = "1.0.1";
+static char *vers = "1.0.1-1";
 
 #include <assert.h>
 #include <getopt.h>
@@ -33,6 +33,9 @@ static int pango = 0;
 static int showfarenheit = 0;
 static int showicon = 1;
 
+/* Pango colors */
+char *coldefault = "default", *yellow = "yellow", *orange = "orange", *red = "red";
+
 static void
 show_version (void)
 {
@@ -45,7 +48,7 @@ show_help (void)
 {
 	show_version ();
 	
-	printf ("-c --cpuusage		Display CPU usage.\n");
+	printf ("-c --cpuusage		Display CPU core usage.\n");
 	printf ("-d --debug		Display debugging output.\n");
 	printf ("-F --farenheit		Display temperature in farenheit.\n");
 	printf ("-h --help		Display this help.\n");
@@ -148,13 +151,13 @@ p2s (int percent) /* Percent to string */
 		{
 			char *color;
 			
-			if (percent < 90)	color = "yellow";
-			else if (percent < 100)	color = "orange";
+			if      (percent < 90)	color = yellow;	/* between 80-90 */
+			else if (percent < 100)	color = orange; /* between 90-100 */
 
 			if (percent < 100)
 				sprintf (buffer, "<span foreground=\"%s\">%2d%%</span>", color, percent);
 			else
-				sprintf (buffer, "<span foreground=\"red\">100</span>");
+				sprintf (buffer, "<span foreground=\"%s\">100</span>", red);
 		}
 	}
 	else
@@ -314,34 +317,45 @@ main (int argc, char *argv[])
 	if (showicon) printf ("<img>%s</img>\n", iconfile);
 
 	/* Text */
-	char line1[128], line2[128], tempbuf[32], rpmbuf[32];
+	char tempbuf[128], rpmbuf[32];	/* Temperature may include pango spans */
+	char line1[512], line2[512];	/* Each line may include 2 or 3 pango spans */
 
 	if (pango)
 	{
-		char *color = "default";
+		/* By default, apply no color change and use whatever color is the default
+		 * for foreground set by the GTK files for XFCE. This might be white or black,
+		 * or some shade of white or black, or whatever the user has setup.
+		 */
+		char *color = coldefault;
 
-		sprintf (line1, "%3.1f°%c", temp, CF);
+		sprintf (buffer, "%3.1f°%c", temp, CF);
 
-		if (CF == 'C')
+		switch (CF)
 		{
-			if (temp < 40)		color = "default";
-			else if (temp < 45)	color = "yellow";
-			else if (temp < 50)	color = "orange";
-			else			color = "red";
+		case 'C':
+			if      (temp < 40)	color = coldefault;
+			else if (temp < 45)	color = yellow;
+			else if (temp < 50)	color = orange;
+			else /* temp >= 50 */	color = red;
+			break;
 
+		case 'F':
+			if      (temp < 105)	color = coldefault;
+			else if (temp < 113)	color = yellow;
+			else if (temp < 122)	color = orange;
+			else /* temp >= 122 */	color = red;
+			break;
 		}
 
-		/* Fixme: Need to add ranges for 'F' */
-
-		if (strcmp (color, "default"))
-			sprintf (tempbuf, "<span foreground=\"%s\">%8s</span>", color, line1);
+		if (strcmp (color, coldefault))
+			sprintf (tempbuf, "<span foreground=\"%s\">%8s</span>", color, buffer);
 		else
-			sprintf (tempbuf, "%8s", line1); /* use the default foreground */
+			sprintf (tempbuf, "%8s", buffer); /* use the default foreground */
 	}
 	else
 	{
-		sprintf (line1, "%3.1f°%c", temp, CF);
-		sprintf (tempbuf, "%8s", line1);
+		sprintf (buffer, "%3.1f°%c", temp, CF);
+		sprintf (tempbuf, "%8s", buffer);
 	}
 
 	sprintf (rpmbuf, "%-4drpm", rpm);
