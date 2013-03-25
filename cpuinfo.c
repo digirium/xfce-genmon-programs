@@ -174,6 +174,12 @@ main (int argc, char *argv[])
 {
 	get_options (argc, argv);
 
+	/* Code below was written to support an AMD Phenom(tm) II X4 965 Processor
+	 * and was writtem assuming there are four cores. In the future it would be
+	 * desirable to make configuration more flexible. The author hopes this does
+	 * put anyone off adapting the code to the particular CPU that they use.
+	 */
+
 	/* Monitor was written for a CPU containing four cores and makes
 	 * assumptions about how to get usage statistics, temperature and
 	 * cpu PWM fan speed. May require editing to get working.
@@ -317,8 +323,8 @@ main (int argc, char *argv[])
 	if (showicon) printf ("<img>%s</img>\n", iconfile);
 
 	/* Text */
-	char tempbuf[128], rpmbuf[32];	/* Temperature may include pango spans */
-	char line1[512], line2[512];	/* Each line may include 2 or 3 pango spans */
+	char tempbuf[128], rpmbuf[32];	/* Temperature may include a single pango span */
+	char line1[512], line2[512];	/* Each line may include up to 3 pango spans */
 
 	if (pango)
 	{
