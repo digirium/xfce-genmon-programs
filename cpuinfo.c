@@ -177,7 +177,7 @@ main (int argc, char *argv[])
 	/* Code below was written to support an AMD Phenom(tm) II X4 965 Processor
 	 * and was written assuming there are four cores. In the future it would be
 	 * desirable to make configuration more flexible. The author hopes this does
-	 * put anyone off adapting the code to the particular CPU that they use.
+	 * not put anyone off adapting the code to the particular CPU that they use.
 	 */
 
 	/* Monitor was written for a CPU containing four cores and makes assumptions
