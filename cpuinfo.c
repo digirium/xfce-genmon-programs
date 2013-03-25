@@ -175,15 +175,16 @@ main (int argc, char *argv[])
 	get_options (argc, argv);
 
 	/* Code below was written to support an AMD Phenom(tm) II X4 965 Processor
-	 * and was writtem assuming there are four cores. In the future it would be
+	 * and was written assuming there are four cores. In the future it would be
 	 * desirable to make configuration more flexible. The author hopes this does
 	 * put anyone off adapting the code to the particular CPU that they use.
 	 */
 
-	/* Monitor was written for a CPU containing four cores and makes
-	 * assumptions about how to get usage statistics, temperature and
-	 * cpu PWM fan speed. May require editing to get working.
+	/* Monitor was written for a CPU containing four cores and makes assumptions
+	 * about how to get usage statistics, temperature and CPU PWM fan speed. For other
+	 * types of CPUs some editing may be required to adapt different configurations.
 	 */
+
 	int cpus = sysconf (_SC_NPROCESSORS_CONF);
 	assert (cpus == 4);
 
