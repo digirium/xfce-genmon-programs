@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 static char *prog = "cpuinfo";
-static char *vers = "1.0.0";
+static char *vers = "1.0.1";
 
 #include <assert.h>
 #include <getopt.h>
@@ -29,6 +29,7 @@ static char *vers = "1.0.0";
 static int cpuusage = 0;
 static int debug = 0;
 static char iconfile[256];
+static int pango = 0;
 static int showfarenheit = 0;
 static int showicon = 1;
 
@@ -49,6 +50,7 @@ show_help (void)
 	printf ("-F --farenheit		Display temperature in farenheit.\n");
 	printf ("-h --help		Display this help.\n");
 	printf ("-i[FILE] --icon[=FILE]	Set the icon filename, or disable the icon.\n");
+	printf ("-p --pango		Generate Pango Markup Language output.\n");
 	printf ("-v --version		Display version information.\n");
 
 	printf ("\nLong options may be passed with a single dash.\n\n");
@@ -71,13 +73,14 @@ get_options (int argc, char *argv[])
 		{ "farenheit",	no_argument,		0, 'F' },
 		{ "help",	no_argument,		0, 'h' },
 		{ "icon",	optional_argument,	0, 'i' },
+		{ "pango",	no_argument,		0, 'p' },
 		{ "version",	no_argument,		0, 'v' },
 		{ 0,0,0,0 }
 	};
 
 	int opt, opti;
 
-	while ((opt = getopt_long (argc, argv, "cdfhi::v", long_opts, &opti)))
+	while ((opt = getopt_long (argc, argv, "cdfhi::pv", long_opts, &opti)))
 	{
 		if (opt == EOF) break;
 
@@ -113,6 +116,15 @@ get_options (int argc, char *argv[])
 
 			break;
 
+		case 'p':
+			/* Enabling Pango Markup Language, or Pango Text Markup Language. Using this option
+			 * allows the CPU monitor to exploit the markup to color the text displaying CPU temperature
+			 * and core utilitization visually in steps for example: yellow, orange and red as
+			 * the CPU gets warmer or as the core is more heavily utilized.
+			 */
+			pango = 1;
+			break;
+
 		case 'v':
 			show_version ();
 			exit (0);
@@ -126,10 +138,30 @@ get_options (int argc, char *argv[])
 static char *
 p2s (int percent) /* Percent to string */
 {
-	char *buffer = (char *)malloc (16);
+	char *buffer = (char *)malloc (128);
 
-	if (percent < 100)	sprintf (buffer, "%2d%%", percent);
-	else			strcpy (buffer, "100");
+	if (pango)
+	{
+		if (percent < 80)
+			sprintf (buffer, "%2d%%", percent);
+		else
+		{
+			char *color;
+			
+			if (percent < 90)	color = "yellow";
+			else if (percent < 100)	color = "orange";
+
+			if (percent < 100)
+				sprintf (buffer, "<span foreground=\"%s\">%2d%%</span>", color, percent);
+			else
+				sprintf (buffer, "<span foreground=\"red\">100</span>");
+		}
+	}
+	else
+	{
+		if (percent < 100)	sprintf (buffer, "%2d%%", percent);
+		else			strcpy (buffer, "100");
+	}
 
 	return buffer;
 }
@@ -283,17 +315,45 @@ main (int argc, char *argv[])
 
 	/* Text */
 	char line1[128], line2[128], tempbuf[32], rpmbuf[32];
-	sprintf (tempbuf, "%3.1f°%c", temp, CF);
+
+	if (pango)
+	{
+		char *color = "default";
+
+		sprintf (line1, "%3.1f°%c", temp, CF);
+
+		if (CF == 'C')
+		{
+			if (temp < 40)		color = "default";
+			else if (temp < 45)	color = "yellow";
+			else if (temp < 50)	color = "orange";
+			else			color = "red";
+
+		}
+
+		/* Fixme: Need to add ranges for 'F' */
+
+		if (strcmp (color, "default"))
+			sprintf (tempbuf, "<span foreground=\"%s\">%8s</span>", color, line1);
+		else
+			sprintf (tempbuf, "%8s", line1); /* use the default foreground */
+	}
+	else
+	{
+		sprintf (line1, "%3.1f°%c", temp, CF);
+		sprintf (tempbuf, "%8s", line1);
+	}
+
 	sprintf (rpmbuf, "%-4drpm", rpm);
 
 	if (cpuusage)
 	{
-		sprintf (line1, "%8s %s %s", tempbuf, p2s(*(percent + 0)), p2s(*(percent + 1)));
+		sprintf (line1, "%s %s %s", tempbuf, p2s(*(percent + 0)), p2s(*(percent + 1)));
 		sprintf (line2, "%7s %s %s", rpmbuf, p2s(*(percent + 2)), p2s(*(percent + 3)));
 	}
 
 	if (cpuusage)	printf ("<txt>%s\n%s</txt>\n", line1, line2);
-	else		printf ("<txt>%8s\n%7s</txt>\n", tempbuf, rpmbuf);
+	else		printf ("<txt>%s\n%7s</txt>\n", tempbuf, rpmbuf);
 		
 	/* Tool tip */
 	printf ("<tool>Maximum temperature observed: %.1f°%c\n", maxtemp, CF);
