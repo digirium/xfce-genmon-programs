@@ -75,7 +75,7 @@ if [[ ! -z "$pkgs" ]]
 then
 	iconfile=$HOME/.genmon-icon/pacinfo-ghost.png
 	pkgs="$pkgs (Total: $n)."
-	txt1="$inst-$n"
+	txt1="$n"
 else
 	pkgs="None."
 	txt1="$inst"
