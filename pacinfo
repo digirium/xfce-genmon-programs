@@ -23,7 +23,7 @@ do
 		showtxt=yes
 		;;
 	v)
-		echo "pacinfo 1.0.1 - (C) 2013 Digirium, see <https://github.com/Digirium>"
+		echo "pacinfo 1.0.2 - (C) 2013 Digirium, see <https://github.com/Digirium>"
 		echo "Released under the GNU GPL."
 		exit 0
 		;;
@@ -99,7 +99,19 @@ fi
 
 cat <<EOF
 <tool>Packages installed: $inst
-Package upgrades waiting: $pkgs
+EOF
+
+case "$pkgs" in
+None.)
+	;;
+*)
+	cat <<-EOF
+	Package upgrades waiting: $pkgs
+	EOF
+	;;
+esac
+
+cat <<EOF
 Package cache size: $txt2
 Last synchronized: $(date)
 Kernel: $(uname -r)</tool>
