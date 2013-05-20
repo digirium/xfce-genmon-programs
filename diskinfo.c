@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 static char *prog = "diskinfo";
-static char *vers = "1.0.0";
+static char *vers = "1.0.1";
 
 #include <assert.h>
 #include <getopt.h>
@@ -236,7 +236,7 @@ main (int argc, char *argv[])
 	 * processes that need to be left running all the time when using a pipe.
 	 */
 	char hddtemp[256], *ID = NULL;
-	sprintf (hddtemp, "/usr/sbin/hddtemp %s", diskpath);
+	sprintf (hddtemp, "sudo hddtemp %s", diskpath);
 	
 	if ((file = popen (hddtemp, "r")))
 	{
