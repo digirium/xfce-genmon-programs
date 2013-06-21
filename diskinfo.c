@@ -86,7 +86,7 @@ get_options (int argc, char *argv[])
 
 	int opt, opti;
 
-	while ((opt = getopt_long (argc, argv, "dfhi::pv", long_opts, &opti)))
+	while ((opt = getopt_long (argc, argv, "dFhi::pv", long_opts, &opti)))
 	{
 		if (opt == EOF) break;
 
