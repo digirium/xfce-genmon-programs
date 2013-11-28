@@ -16,14 +16,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 showtxt=no
-while getopts ":tv" opt
+showaur=no
+while getopts ":atv" opt
 do
 	case $opt in
+	a)
+		showaur=yes
+		;;
 	t)
 		showtxt=yes
 		;;
 	v)
-		echo "pacinfo 1.0.2 - (C) 2013 Digirium, see <https://github.com/Digirium>"
+		echo "pacinfo 1.0.3 - (C) 2013 Digirium, see <https://github.com/Digirium>"
 		echo "Released under the GNU GPL."
 		exit 0
 		;;
@@ -39,9 +43,20 @@ done
 iconfile=$HOME/.genmon-icon/pacinfo.png
 
 # Need sudo to be setup so that no password is required. Run pacman
-# to update the database and to get package upgrade list.
-sudo pacman -Sy --noprogressbar 1>/dev/null 2>&1
-pkgs=$(pacman -Qqu)
+# to update the database and to get package upgrade list. If you use
+# AUR packages and have yaourt installed then can show if any AUR
+# packages can/will be upgraded too.
+case $showaur in
+yes)
+	yaourt -Sya --noprogressbar &>/dev/null
+	pkgs=$(yaourt -Qqua)
+	;;
+no)
+	sudo pacman -Sy --noprogressbar &>/dev/null
+	pkgs=$(pacman -Qqu)
+	;;
+
+esac
 
 # If there are packages, filter the ignored ones. Add ignored package
 # names to the ignorelist line separate names with a bar; wine is put on
@@ -98,7 +113,7 @@ then
 fi
 
 cat <<EOF
-<tool>Packages installed: $inst
+<tool>Last synchronized: $(date)
 EOF
 
 case "$pkgs" in
@@ -112,9 +127,10 @@ None.)
 esac
 
 cat <<EOF
+Packages installed: $inst
 Package cache size: $txt2
-Last synchronized: $(date)
-Kernel: $(uname -r)</tool>
+Kernel: $(uname -r)
+AUR: $showaur</tool>
 EOF
 
 exit 0

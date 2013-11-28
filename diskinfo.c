@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 static char *prog = "diskinfo";
-static char *vers = "1.0.1";
+static char *vers = "1.0.2";
 
 #include <assert.h>
 #include <getopt.h>
@@ -282,7 +282,7 @@ main (int argc, char *argv[])
 	printf ("<img>%s</img>\n", iconfile);
 
 	/* Text */
-	printf ("<txt>%sG\n%d°%c</txt>\n", du(diskused), (int)disktemp, CF);
+	printf ("<txt>%d°%c\n%sG</txt>\n", (int)disktemp, CF, du(diskused));
 
 	/* Tool tip */
 	printf ("<tool>ID: %s\n", ID);
