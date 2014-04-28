@@ -56,7 +56,7 @@ usedmem=$(nvidia-settings -q [gpu:0]/UsedDedicatedGPUMemory -t)
 
 clocks2=$(nvidia-settings -q [gpu:0]/GPUCurrentClockFreqsString -t)
 nvclock=$(echo $clocks2 | sed 's/nvclock=\([0-9]*\),.*$/\1/')
-memclock=$(echo $clocks2 | sed 's/^.*, memclock=\([0-9]*\)$/\1/')
+memclock=$(echo $clocks2 | sed 's/^.*, memclock=\([0-9]*\).*$/\1/')
 
 case $CF in
 F)

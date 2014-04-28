@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 static char *prog = "diskinfo";
-static char *vers = "1.0.2";
+static char *vers = "1.0.3";
 
 #include <assert.h>
 #include <getopt.h>
@@ -32,6 +32,7 @@ static char *vers = "1.0.2";
 static int debug = 0;
 static char iconfile[256];
 static char *mountpath = NULL;
+static char *hddtemppath = NULL;
 static int showbar = 0;
 static int showfarenheit = 0;
 static int showicon = 1;
@@ -60,6 +61,7 @@ show_help (void)
 	printf ("-F --farenheit		Display temperature in farenheit.\n");
 	printf ("-i[FILE] --icon[=FILE]	Set the icon filename, or disable the icon.\n");
 	printf ("-p --percentbar		Display the percent bar.\n");
+	printf ("-tDISK --disktemp=DISK	Set the disk path to read temperature from.\n");
 	printf ("-v --version		Display version information.\n");
 
 	printf ("\nLong options may be passed with a single dash.\n\n");
@@ -76,6 +78,7 @@ get_options (int argc, char *argv[])
 	static struct option long_opts[] =
 	{
 		{ "debug",	no_argument,		0, 'd' },
+		{ "disktemp",	required_argument,	0, 't' },
 		{ "farenheit",	no_argument,		0, 'F' },
 		{ "help",	no_argument,		0, 'h' },
 		{ "icon",	optional_argument,	0, 'i' },
@@ -86,7 +89,7 @@ get_options (int argc, char *argv[])
 
 	int opt, opti;
 
-	while ((opt = getopt_long (argc, argv, "dFhi::pv", long_opts, &opti)))
+	while ((opt = getopt_long (argc, argv, "dFhi::pt:v", long_opts, &opti)))
 	{
 		if (opt == EOF) break;
 
@@ -120,6 +123,10 @@ get_options (int argc, char *argv[])
 
 		case 'p':
 			showbar = 1;
+			break;
+
+		case 't':
+			hddtemppath = optarg;
 			break;
 
 		case 'v':
@@ -236,7 +243,7 @@ main (int argc, char *argv[])
 	 * processes that need to be left running all the time when using a pipe.
 	 */
 	char hddtemp[256], *ID = NULL;
-	sprintf (hddtemp, "sudo hddtemp %s", diskpath);
+	sprintf (hddtemp, "sudo hddtemp %s", (hddtemppath ? hddtemppath : diskpath));
 	
 	if ((file = popen (hddtemp, "r")))
 	{

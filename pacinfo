@@ -66,8 +66,8 @@ let "n=0"
 for p in $pkgs
 do
 	case $p in
-	ignorelist|wine)
-		;;
+	# ignorelist|wine)
+	#	;;
 	*)
 		if [[ -z "$t" ]]
 		then
@@ -127,7 +127,7 @@ None.)
 esac
 
 cat <<EOF
-Packages installed: $inst
+Packages installed: $inst (Foreign: $(pacman -Qm | wc -l))
 Package cache size: $txt2
 Kernel: $(uname -r)
 AUR: $showaur</tool>

@@ -161,8 +161,8 @@ fi
 
 cat <<EOF
 <img>$iconfile</img>
-<tool>Memory cache size: $(du -sm $cachedir | awk '{ print $1 }')MB
-Last synchronized: $(date)</tool>
+<tool>Last synchronized: $(date)
+Memory cache size: $(du -sm $cachedir | awk '{ print $1 }')MB</tool>
 <click>$0 -w</click>
 EOF
 
