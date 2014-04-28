@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 static char *prog = "cpuinfo";
-static char *vers = "1.0.1-1";
+static char *vers = "1.0.2";
 
 #include <assert.h>
 #include <getopt.h>
@@ -186,7 +186,7 @@ main (int argc, char *argv[])
 	 */
 
 	int cpus = sysconf (_SC_NPROCESSORS_CONF);
-	assert (cpus == 4);
+	assert (cpus == 4 || cpus == 2);
 
 	/* Allocate some storage for the previous total and idle values.
 	 */
@@ -274,27 +274,43 @@ main (int argc, char *argv[])
 
 	while (fgets (buffer, 256, file))
 	{
-		switch (buffer[0])
+		if (cpus == 4)
 		{
-		/* CPU temperature */
-		case 't':
-			if (strstr (buffer, "temp1:") == buffer)
+			switch (buffer[0])
 			{
-				ret = sscanf (buffer, "temp1: +%f", &temp);
-				assert (ret == 1);
-			}
+			/* CPU temperature */
+			case 't':
+				if (strstr (buffer, "temp1:") == buffer)
+				{
+					ret = sscanf (buffer, "temp1: +%f", &temp);
+					assert (ret == 1);
+				}
 
-			break;
-				
-		/* CPU Fan Speed */
-		case 'C':
-			if (strstr (buffer, "CPU Fan Speed:") == buffer)
+				break;
+					
+			/* CPU Fan Speed */
+			case 'C':
+				if (strstr (buffer, "CPU Fan Speed:") == buffer)
+				{
+					ret = sscanf (buffer, "CPU Fan Speed: %d RPM", &rpm);
+					assert (ret == 1);
+				}
+
+				break;
+			}
+		}
+		else /* cpus == 2 */
+		{
+			switch (buffer[0])
 			{
-				ret = sscanf (buffer, "CPU Fan Speed: %d RPM", &rpm);
-				assert (ret == 1);
+			/* CPU temperature */
+			case 'C':
+				if (strstr (buffer, "Core 0:") == buffer)
+				{
+					ret = sscanf (buffer, "Core 0: +%f", &temp);
+					assert (ret == 1);
+				}
 			}
-
-			break;
 		}
 	}
 	pclose (file);
@@ -340,10 +356,20 @@ main (int argc, char *argv[])
 		switch (CF)
 		{
 		case 'C':
-			if      (temp < 40)	color = coldefault;
-			else if (temp < 45)	color = yellow;
-			else if (temp < 50)	color = orange;
-			else /* temp >= 50 */	color = red;
+			if (cpus == 4)
+			{
+				if      (temp < 40)	color = coldefault;
+				else if (temp < 45)	color = yellow;
+				else if (temp < 50)	color = orange;
+				else /* temp >= 50 */	color = red;
+			}
+			else /* cpus == 2 */
+			{
+				if      (temp < 60)	color = coldefault;
+				else if (temp < 70)	color = yellow;
+				else if (temp < 80)	color = orange;
+				else /* temp >= 80 */	color = red;
+			}
 			break;
 
 		case 'F':
@@ -369,16 +395,31 @@ main (int argc, char *argv[])
 
 	if (cpuusage)
 	{
-		sprintf (line1, "%s %s %s", tempbuf, p2s(*(percent + 0)), p2s(*(percent + 1)));
-		sprintf (line2, "%7s %s %s", rpmbuf, p2s(*(percent + 2)), p2s(*(percent + 3)));
+		if (cpus == 4)
+		{
+			sprintf (line1, "%s %s %s", tempbuf, p2s(*(percent + 0)), p2s(*(percent + 1)));
+			sprintf (line2, "%7s %s %s", rpmbuf, p2s(*(percent + 2)), p2s(*(percent + 3)));
+		}
+		else /* cpus == 2 */
+		{
+			sprintf (line1, "%s", tempbuf);
+			sprintf (line2, "%s %s", p2s(*(percent + 0)), p2s(*(percent + 1)));
+		}
 	}
 
 	if (cpuusage)	printf ("<txt>%s\n%s</txt>\n", line1, line2);
 	else		printf ("<txt>%s\n%7s</txt>\n", tempbuf, rpmbuf);
 		
 	/* Tool tip */
-	printf ("<tool>Maximum temperature observed: %.1f°%c\n", maxtemp, CF);
-	printf ("Maximum RPM observed: %drpm</tool>/n", maxrpm);
+	if (cpus == 4)
+	{
+		printf ("<tool>Maximum temperature observed: %.1f°%c\n", maxtemp, CF);
+		printf ("Maximum RPM observed: %drpm</tool>", maxrpm);
+	}
+	else /* cpus == 2 */
+	{
+		printf ("<tool>Maximum temperature observed: %.1f°%c</tool>", maxtemp, CF);
+	}
 
 	return 0;
 }
